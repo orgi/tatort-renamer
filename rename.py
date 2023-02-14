@@ -25,7 +25,7 @@ for episode_data in soup.find_all('h4', class_='list-group-item-heading'):
     episodes_data.append((episode_number, episode_file_name,))
 
 
-tatort_folder = '/mnt/TV Shows/Tatort'
+tatort_folder = '/mnt/TV Shows/Tatort/'
 
 def similarity(word, pattern):
     return difflib.SequenceMatcher(a=word.lower(), b=pattern.lower()).ratio()
@@ -44,6 +44,12 @@ def find_episode_data(episode_name):
     else:
         return None
 
+def make_valid_file_name(potential_file_name):
+    return potential_file_name.replace('/', ' & ')
+
+def get_folder_from_episode_number(episode_number):
+    return re.sub(r"S(\d{4})E\d+", r"Season \1", episode_number)
+
 for episode_old_name in os.listdir(tatort_folder):
     filename = os.fsdecode(episode_old_name)
     if (filename.endswith('.mkv')):
@@ -53,8 +59,13 @@ for episode_old_name in os.listdir(tatort_folder):
         episode_data = find_episode_data(episode_name)
         if episode_data is not None:
             # print(f"{episode_name}: {episode_data}")
-            new_file_name = f"Tatort - {episode_data[0]} - {episode_data[1]}.mkv"
+            new_file_name = make_valid_file_name(f"Tatort - {episode_data[0]} - {episode_data[1]}.mkv")
+            folder_name = get_folder_from_episode_number(episode_data[0])
+            new_file_name = f"{folder_name}/{new_file_name}"
             print(f"rename: {filename} -> {new_file_name}")
+            if not os.path.exists(tatort_folder + folder_name):
+                os.makedirs(tatort_folder + folder_name)
+            os.rename(tatort_folder + filename, tatort_folder + new_file_name)
         else:
             print(f"Error: Episode data not found for {episode_name}")
 
